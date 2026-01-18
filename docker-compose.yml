@@ -1,0 +1,33 @@
+services:
+  api:
+    build: ./app
+    container_name: todo-api-container
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db-postgres
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASS=${POSTGRES_PASSWORD}
+    networks:
+      - internal-network
+    restart: always
+
+  db-postgres:
+    image: postgres:15-alpine
+    container_name: todo-db-container
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - data-persistent:/var/lib/postgresql/data
+    networks:
+      - internal-network
+
+volumes:
+  data-persistent:
+
+networks:
+  internal-network:
+    driver: bridge
