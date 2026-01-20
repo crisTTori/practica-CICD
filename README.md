@@ -33,9 +33,12 @@ La aplicación es configurable mediante variables de entorno. Los parámetros di
 
 ### Instalación y ejecución
 1. Clona este repositorio.
-2. Localiza el archivo `.env.example` en la raíz del proyecto.
-3. Crea una copia y renónmbrala a `.env`, modificando las credenciales si queremos.
-4. Desde la raíz del proyecto, ejecuta el siguiente comando para construir y levantar los servicios:
+   ```bash
+   git clone https://github.com/crisTTori/practica-apitodo
+   
+3. Localiza el archivo `.env.example` en la raíz del proyecto (ver archivos ocultos).
+4. Crea una copia y renónmbrala a `.env`, modificando con tus credenciales.
+5. Desde la raíz del proyecto, ejecuta el siguiente comando para construir y levantar los servicios:
 
    ```bash
    docker compose up --build -d
