@@ -115,7 +115,12 @@ jobs:
           name: Analizar vulnerabilidades en dependencias Python
           command: |
             . venv/bin/activate
-            snyk test --file=app/requirements.txt --package-manager=pip
+            snyk test --file=app/requirements.txt --package-manager=pip --org=cristtori > snyk-report.txt || true
+            cat snyk-report.txt
+
+      - store_artifacts:
+          path: snyk-report.txt
+          destination: snyk-report
 
 workflows:
   ci_pipeline:
