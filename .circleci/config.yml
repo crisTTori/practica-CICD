@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  sonarcloud: sonarsource/sonarcloud@2.0.0
+
 jobs:
   test-and-quality:
     docker:
@@ -10,7 +13,7 @@ jobs:
       - checkout
 
       - run:
-          name: Instalar dependencias de la aplicación
+          name: Instalar dependencias
           command: |
             python -m pip install --upgrade pip
             pip install -r app/requirements.txt
@@ -21,7 +24,7 @@ jobs:
           command: pytest
 
       - run:
-          name: Ejecutar cobertura
+          name: Generar cobertura
           command: pytest --cov=app --cov-report=xml --cov-report=term-missing
 
       - run:
@@ -42,7 +45,19 @@ jobs:
           path: coverage.xml
           destination: coverage-report
 
+  sonar-analysis:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/project
+
+    steps:
+      - checkout
+      - sonarcloud/scan
+
 workflows:
   ci_pipeline:
     jobs:
       - test-and-quality
+      - sonar-analysis:
+          requires:
+            - test-and-quality
