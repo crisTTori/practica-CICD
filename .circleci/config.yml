@@ -54,10 +54,36 @@ jobs:
       - checkout
       - sonarcloud/scan
 
+  snyk-analysis:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/project
+
+    steps:
+      - checkout
+
+      - run:
+          name: Instalar Snyk CLI
+          command: |
+            curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
+            chmod +x ./snyk
+            sudo mv ./snyk /usr/local/bin/snyk
+
+      - run:
+          name: Autenticar Snyk
+          command: snyk auth $SNYK_TOKEN
+
+      - run:
+          name: Analizar vulnerabilidades en dependencias Python
+          command: snyk test --file=app/requirements.txt
+
 workflows:
   ci_pipeline:
     jobs:
       - test-and-quality
       - sonar-analysis:
+          requires:
+            - test-and-quality
+      - snyk-analysis:
           requires:
             - test-and-quality
