@@ -4,24 +4,24 @@ import logging
 from pythonjsonlogger import jsonlogger
 from flask import Flask, jsonify, request, render_template
 import psycopg2
+from psycopg2 import Error
 from psycopg2.extras import RealDictCursor
 
-# Configuración de logs: Formato JSON profesional
 logger = logging.getLogger("todo-api")
-logHandler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s')
-logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
+log_handler = logging.StreamHandler()
+formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+log_handler.setFormatter(formatter)
+logger.addHandler(log_handler)
 logger.setLevel(logging.INFO)
 logger.propagate = False
 
 app = Flask(__name__)
 
-# Configuración mediante variables de entorno
-DB_HOST = os.getenv('DB_HOST', 'db-tareas')
-DB_NAME = os.getenv('DB_NAME', 'tareas_db')
-DB_USER = os.getenv('DB_USER', 'admin')
-DB_PASS = os.getenv('DB_PASS', 'password')
+DB_HOST = os.getenv("DB_HOST", "db-tareas")
+DB_NAME = os.getenv("DB_NAME", "tareas_db")
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "password")
+
 
 def get_db_connection():
     return psycopg2.connect(
@@ -31,12 +31,11 @@ def get_db_connection():
         password=DB_PASS
     )
 
+
 def init_db():
-    """Crea la tabla con la columna 'completed' para el check"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Hemos añadido 'completed BOOLEAN DEFAULT FALSE'
         cur.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id SERIAL PRIMARY KEY,
@@ -48,68 +47,89 @@ def init_db():
         conn.commit()
         cur.close()
         conn.close()
-        logger.info("Base de datos inicializada correctamente con soporte para estados.")
-    except Exception as e:
-        logger.error(f"No se pudo conectar a la base de datos: {e}")
-        raise e
+        logger.info("Base de datos inicializada correctamente.")
+    except Error as exc:
+        logger.error("No se pudo conectar a la base de datos: %s", exc)
+        raise
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/tasks', methods=['GET'])
+
+@app.route("/tasks", methods=["GET"])
 def list_tasks():
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        # Seleccionamos también la columna completed
-        cur.execute('SELECT id, content, completed, created_at FROM tasks ORDER BY created_at DESC;')
+        cur.execute(
+            "SELECT id, content, completed, created_at FROM tasks ORDER BY created_at DESC;"
+        )
         rows = cur.fetchall()
         cur.close()
         conn.close()
         return jsonify(rows)
-    except Exception as e:
-        logger.error(f"Error obteniendo tareas: {e}")
+    except Error as exc:
+        logger.error("Error obteniendo tareas: %s", exc)
         return jsonify({"error": "Error interno"}), 500
 
-@app.route('/tasks', methods=['POST'])
+
+@app.route("/tasks", methods=["POST"])
 def add_task():
     data = request.get_json()
-    if not data or 'content' not in data:
+    if not data or "content" not in data:
         return jsonify({"error": "Contenido obligatorio"}), 400
+
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute('INSERT INTO tasks (content) VALUES (%s) RETURNING *;', (data['content'],))
+        cur.execute(
+            "INSERT INTO tasks (content) VALUES (%s) RETURNING *;",
+            (data["content"],)
+        )
         new_task = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
-        logger.info(f"Tarea creada: {data['content']}")
+        logger.info("Tarea creada: %s", data["content"])
         return jsonify(new_task), 201
-    except Exception as e:
-        logger.error(f"Error al guardar: {e}")
+    except Error as exc:
+        logger.error("Error al guardar: %s", exc)
         return jsonify({"error": "Error al guardar"}), 500
 
-@app.route('/tasks/<int:task_id>', methods=['PATCH'])
+
+@app.route("/tasks/<int:task_id>", methods=["PATCH"])
 def update_task(task_id):
-    """Ruta para marcar como completada o pendiente"""
     data = request.get_json()
-    completed = data.get('completed')
+
+    if not data or "completed" not in data:
+        return jsonify({"error": "Campo completed obligatorio"}), 400
+
+    completed = data["completed"]
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('UPDATE tasks SET completed = %s WHERE id = %s', (completed, task_id))
+        cur.execute(
+            "UPDATE tasks SET completed = %s WHERE id = %s",
+            (completed, task_id)
+        )
         conn.commit()
         cur.close()
         conn.close()
-        logger.info(f"Tarea {task_id} actualizada a: {completed}")
+        logger.info("Tarea %s actualizada a: %s", task_id, completed)
         return jsonify({"status": "updated"})
-    except Exception as e:
-        logger.error(f"Error al actualizar tarea {task_id}: {e}")
+    except Error as exc:
+        logger.error("Error al actualizar tarea %s: %s", task_id, exc)
         return jsonify({"error": "No se pudo actualizar"}), 500
 
-if __name__ == '__main__':
+
+def run_app():
     time.sleep(5)
     init_db()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port=5000)
+
+
+if __name__ == "__main__":
+    run_app()

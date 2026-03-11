@@ -1,0 +1,48 @@
+version: 2.1
+
+jobs:
+  test-and-quality:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/project
+
+    steps:
+      - checkout
+
+      - run:
+          name: Instalar dependencias de la aplicación
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r app/requirements.txt
+            pip install -r requirements-dev.txt
+
+      - run:
+          name: Ejecutar tests
+          command: pytest
+
+      - run:
+          name: Ejecutar cobertura
+          command: pytest --cov=app --cov-report=xml --cov-report=term-missing
+
+      - run:
+          name: Ejecutar flake8
+          command: flake8 app tests
+
+      - run:
+          name: Ejecutar pylint
+          command: pylint app/main.py
+
+      - setup_remote_docker
+
+      - run:
+          name: Construir imagen Docker
+          command: docker build -t todo-app:test ./app
+
+      - store_artifacts:
+          path: coverage.xml
+          destination: coverage-report
+
+workflows:
+  ci_pipeline:
+    jobs:
+      - test-and-quality

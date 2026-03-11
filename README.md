@@ -6,7 +6,7 @@ Este proyecto es una API de gestión de tareas (To-Do List) desarrollada para la
 
 El despliegue se basa en una arquitectura de microservicios orquestada con **Docker Compose**, tal como se muestra en el siguiente esquema:
 
-![Esquema de Arquitectura](./esquema-app-docker.png)
+![Esquema de Arquitectura](./docs/esquema-app-docker.png)
 
 ### Componentes:
 - **API (Flask):** Servicio encargado de la lógica de negocio y exposición de endpoints.
