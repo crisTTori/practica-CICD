@@ -12,33 +12,53 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - v1-python-deps-{{ checksum "app/requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            - v1-python-deps-
+
       - run:
-          name: Instalar dependencias
+          name: Crear entorno virtual e instalar dependencias
           command: |
+            python -m venv venv
+            . venv/bin/activate
             python -m pip install --upgrade pip
             pip install -r app/requirements.txt
             pip install -r requirements-dev.txt
 
+      - save_cache:
+          key: v1-python-deps-{{ checksum "app/requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          paths:
+            - venv
+
       - run:
           name: Ejecutar tests
-          command: pytest
+          command: |
+            . venv/bin/activate
+            pytest
 
       - run:
           name: Generar cobertura
-          command: pytest --cov=app --cov-report=xml --cov-report=term-missing
+          command: |
+            . venv/bin/activate
+            pytest --cov=app --cov-report=xml --cov-report=term-missing
 
       - run:
           name: Ejecutar flake8
-          command: flake8 app tests
+          command: |
+            . venv/bin/activate
+            flake8 app tests
 
       - run:
           name: Ejecutar pylint
-          command: pylint app/main.py
+          command: |
+            . venv/bin/activate
+            pylint app/main.py
 
       - setup_remote_docker
 
       - run:
-          name: Construye imagen Docker
+          name: Construir imagen Docker
           command: docker build -t todo-app:test ./app
 
       - store_artifacts:
@@ -62,6 +82,24 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - v1-python-app-deps-{{ checksum "app/requirements.txt" }}
+            - v1-python-app-deps-
+
+      - run:
+          name: Crear entorno virtual e instalar dependencias de la app
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            python -m pip install --upgrade pip
+            pip install -r app/requirements.txt
+
+      - save_cache:
+          key: v1-python-app-deps-{{ checksum "app/requirements.txt" }}
+          paths:
+            - venv
+
       - run:
           name: Instalar Snyk CLI
           command: |
@@ -75,7 +113,9 @@ jobs:
 
       - run:
           name: Analizar vulnerabilidades en dependencias Python
-          command: snyk test --file=app/requirements.txt
+          command: |
+            . venv/bin/activate
+            snyk test --file=app/requirements.txt --package-manager=pip
 
 workflows:
   ci_pipeline:
