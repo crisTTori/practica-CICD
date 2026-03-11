@@ -38,7 +38,7 @@ jobs:
       - setup_remote_docker
 
       - run:
-          name: Construir imagen Docker
+          name: Construye imagen Docker
           command: docker build -t todo-app:test ./app
 
       - store_artifacts:
