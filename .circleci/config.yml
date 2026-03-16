@@ -32,13 +32,7 @@ jobs:
             - venv
 
       - run:
-          name: Ejecutar tests
-          command: |
-            . venv/bin/activate
-            pytest
-
-      - run:
-          name: Generar cobertura
+          name: Ejecutar tests con cobertura
           command: |
             . venv/bin/activate
             pytest --cov=app --cov-report=xml --cov-report=term-missing
@@ -55,11 +49,11 @@ jobs:
             . venv/bin/activate
             pylint app/main.py
 
-      - setup_remote_docker
-
-      - run:
-          name: Construir imagen Docker
-          command: docker build -t todo-app:test ./app
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - coverage.xml
+            - .
 
       - store_artifacts:
           path: coverage.xml
@@ -71,7 +65,8 @@ jobs:
     working_directory: ~/project
 
     steps:
-      - checkout
+      - attach_workspace:
+          at: ~/project
       - sonarcloud/scan
 
   snyk-analysis:
@@ -112,14 +107,19 @@ jobs:
           command: snyk auth $SNYK_TOKEN
 
       - run:
-          name: Analizar vulnerabilidades en dependencias Python
+          name: Analizar vulnerabilidades
           command: |
             . venv/bin/activate
-            snyk test --file=app/requirements.txt --package-manager=pip --org=cristtori > snyk-report.txt || true
-            cat snyk-report.txt
+            snyk test --file=app/requirements.txt --severity-threshold=high || echo "Vulnerabilidades encontradas"
+
+      - run:
+          name: Generar reporte
+          command: |
+            . venv/bin/activate
+            snyk test --file=app/requirements.txt --json > snyk-report.json || true
 
       - store_artifacts:
-          path: snyk-report.txt
+          path: snyk-report.json
           destination: snyk-report
           
   publish-docker-image:
@@ -130,7 +130,8 @@ jobs:
     steps:
       - checkout
 
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.24
 
       - run:
           name: Login Docker Hub
