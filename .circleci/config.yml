@@ -124,30 +124,30 @@ jobs:
           
   publish-docker-image:
     docker:
-    - image: cimg/base:stable
+      - image: cimg/base:stable
     working_directory: ~/project
 
     steps:
-    - checkout
+      - checkout
 
-    - setup_remote_docker
+      - setup_remote_docker
 
-    - run:
-        name: Login Docker Hub
-        command: |
-          echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Login Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-    - run:
-        name: Build Docker image
-        command: |
-          docker build -t $DOCKERHUB_USERNAME/apitodo:latest ./app
-          docker build -t $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1} ./app
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t $DOCKERHUB_USERNAME/apitodo:latest ./app
+            docker build -t $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1} ./app
 
-    - run:
-        name: Push Docker image
-        command: |
-          docker push $DOCKERHUB_USERNAME/apitodo:latest
-          docker push $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1}
+      - run:
+          name: Push Docker image
+          command: |
+            docker push $DOCKERHUB_USERNAME/apitodo:latest
+            docker push $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1}
 
 workflows:
   ci_pipeline:
