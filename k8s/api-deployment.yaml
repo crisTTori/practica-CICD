@@ -16,6 +16,7 @@ spec:
       containers:
         - name: todo-api
           image: cristianllor/apitodo:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
