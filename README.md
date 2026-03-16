@@ -1,53 +1,206 @@
-# To-Do API Microservice 🚀
+# API de Tareas - Práctica Final CI/CD
 
-Este proyecto es una API de gestión de tareas (To-Do List) desarrollada para la práctica final del módulo Docker. Consiste en un microservicio en **Python (Flask)** que interactúa con una base de datos **PostgreSQL**.
+## 📋 Sobre esta práctica
 
-## 🏗️ Arquitectura del Proyecto
+Esta es mi práctica final del módulo de CI/CD del bootcamp de DevOps. El objetivo era montar un pipeline completo de integración y despliegue continuo para una aplicación dockerizada.
 
-El despliegue se basa en una arquitectura de microservicios orquestada con **Docker Compose**, tal como se muestra en el siguiente esquema:
+Decidí aprovechar una API REST de tareas (TODO list) que ya tenía de otro proyecto en lugar de un simple "Hola Mundo" porque quería practicar con algo más cercano a un proyecto real, aunque sin complicarme demasiado y así poner en práctica todos los conocimientos que he ido adquiriendo.
 
-![Esquema de Arquitectura](./docs/esquema-app-docker.png)
+## 🛠️ ¿Qué he montado?
 
-### Componentes:
-- **API (Flask):** Servicio encargado de la lógica de negocio y exposición de endpoints.
-- **Database (PostgreSQL):** Almacenamiento persistente de las tareas.
-- **Network:** Red interna tipo bridge para aislar la comunicación entre contenedores.
-- **Volume:** Volumen persistente para asegurar que los datos no se borren al reiniciar los contenedores.
+- Una API REST con Python/Flask que guarda tareas en PostgreSQL
+- Todo contenerizado con Docker
+- Pipeline de CI/CD con CircleCI
+- Tests automáticos y análisis de calidad
+- Publicación de la imagen en Docker Hub
+- Despliegue en Kubernetes (local con Minikube)
+- Sincronización automática con ArgoCD
 
-## ⚙️ Configuración
+## 🚀 Tecnologías
 
-La aplicación es configurable mediante variables de entorno. Los parámetros disponibles son:
+- **Backend**: Python 3.11 + Flask
+- **Base de datos**: PostgreSQL 15
+- **Contenedores**: Docker + Docker Compose
+- **CI/CD**: CircleCI
+- **Calidad**: SonarCloud + flake8 + pylint
+- **Seguridad**: Snyk
+- **Registro**: Docker Hub
+- **Orquestación**: Kubernetes (Minikube)
+- **GitOps**: ArgoCD
 
-| Variable | Descripción | Valor por defecto |
-| :--- | :--- | :--- |
-| `DB_HOST` | Host/Servicio de la base de datos | `db-tareas` |
-| `DB_NAME` | Nombre de la base de datos | `tareas_db` |
-| `DB_USER` | Usuario de conexión | `admin` |
-| `DB_PASS` | Contraseña de conexión | `password` |
+## 📂 Estructura del proyecto
+```
+practica-apitodo/
+├── app/
+│   ├── main.py              # Código de la API
+│   ├── requirements.txt     # Dependencias de producción
+│   ├── Dockerfile           # Imagen de la aplicación
+│   └── templates/
+│       └── index.html       # Interfaz web simple
+│
+├── k8s/                     # Manifiestos de Kubernetes
+│   ├── namespace.yaml
+│   ├── api-deployment.yaml
+│   ├── api-service.yaml
+│   ├── postgres-statefulset.yaml
+│   ├── postgres-service.yaml
+│   └── postgres-secret.yaml
+│
+├── tests/
+│   └── test_main.py         # Tests de la API
+│
+├── .circleci/
+│   └── config.yml           # Pipeline de CI/CD
+│
+├── docker-compose.yml       # Para desarrollo local
+├── requirements-dev.txt     # Dependencias de testing
+├── .flake8                  # Config del linter
+├── .pylintrc                # Config de pylint
+├── sonar-project.properties # Config de SonarCloud
+└── README.md
+```
 
-## 🚀 Puesta en marcha
+## 🌿 Gestión de ramas (Git Flow)
 
-### Requisitos previos
-- Docker instalado.
-- Docker Compose instalado.
+He trabajado con una estructura simple:
 
-### Instalación y ejecución
-1. Clona este repositorio.
-   ```bash
-   git clone https://github.com/crisTTori/practica-apitodo
-   
-3. Localiza el archivo `.env.example` en la raíz del proyecto (ver archivos ocultos).
-4. Crea una copia y renónmbrala a `.env`, modificando con tus credenciales.
-5. Desde la raíz del proyecto, ejecuta el siguiente comando para construir y levantar los servicios:
+- `main` → Producción (aquí se despliega automáticamente)
+- `develop` → Integración de cambios
+- `feature/*` → Nuevas funcionalidades
 
-   ```bash
-   docker compose up --build -d
+Por ejemplo, para añadir el pipeline de CircleCI creé una rama `feature/circleci`, hice los cambios allí, los probé, y luego hice merge a `develop` y finalmente a `main`.
 
-### Probando aplicación
-Podemos probar nuestra aplicación de manera interactiva poniendo la ruta en el navegador **localhost:5000"
-Añadiendo tareas luego podremos comprobar la persistencia de datos haciendo un `compose down`y luego un `compose up`, de esta manera al recrear el contenedor debería seguir teniendo las tareas almacenadas-
+## 🔄 Pipeline de CI/CD (CircleCI)
 
-## 📊 Logs de la aplicación
-Para verificar el funcionamiento y ver los logs de la aplicación en tiempo real (STDOUT/STDERR):
+El pipeline está en `.circleci/config.yml` y se ejecuta automáticamente en cada push.
+
+### Pasos del pipeline:
+
+1. **Instalación** → Instala las dependencias
+2. **Tests** → Ejecuta pytest con cobertura
+3. **Linting** → Comprueba el estilo con flake8
+4. **Análisis estático** → Revisa el código con pylint
+5. **SonarCloud** → Analiza la calidad del código
+6. **Snyk** → Busca vulnerabilidades en dependencias
+7. **Build Docker** → Construye la imagen
+8. **Publish** → Sube la imagen a Docker Hub (solo en `main`)
+
+### Jobs principales:
+
+- `test-and-quality` → Tests, cobertura y linting
+- `sonar-analysis` → Análisis de calidad de código
+- `snyk-analysis` → Escaneo de vulnerabilidades
+- `publish-docker-image` → Build y push de la imagen (solo main)
+
+## 🧪 Tests y calidad de código
+
+El pipeline ejecuta automáticamente:
+
+- **Tests** con pytest y reporte de cobertura
+- **Linting** con flake8 (estilo PEP8)
+- **Análisis estático** con pylint
+- **Calidad de código** con SonarCloud
+- **Vulnerabilidades** con Snyk
+
+## 🐳 Docker
+
+### Desarrollo local con Docker Compose
+
+Para probar en local sin complicarme (por eso dejé el el "docker-compose.yaml" en el repo):
 ```bash
-docker-compose logs -f api
+docker-compose up --build
+```
+
+Esto levanta la API y PostgreSQL con todo configurado.
+
+### Imagen publicada
+
+La imagen se publica automáticamente en Docker Hub cuando hago merge a `main`:
+
+**Repositorio**: `cristianllor/apitodo`
+
+Se generan dos tags:
+- `latest` → Última versión
+- `<commit-hash>` → Versión específica por commit
+
+## ☸️ Kubernetes y ArgoCD
+
+He desplegado la aplicación en Kubernetes usando Minikube y ArgoCD para la sincronización automática.
+
+Los manifiestos están en la carpeta `k8s/` e incluyen:
+- Deployment y Service para la API
+- StatefulSet y Service para PostgreSQL
+- Secret para las credenciales
+- PersistentVolumeClaim para la persistencia de datos
+
+### GitOps con ArgoCD:
+
+El flujo es simple: cuando hago cambios en los manifiestos de `k8s/`, ArgoCD detecta que el cluster está desincronizado y aplica los cambios automáticamente (o manualmente según la configuración).
+```bash
+# Acceder a ArgoCD
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Ver estado de la aplicación
+kubectl get all -n todo-app
+```
+
+**Nota sobre secretos**: Para esta práctica he usado credenciales de prueba que están en el repositorio. En producción esto **NO es recomendable** y se deberían usar herramientas como Sealed Secrets o gestores de secretos.
+
+## 🎯 Flujo completo del proyecto
+
+![Pipeline CI/CD](./docs/esquema-cicd-pipeline.png)
+
+Así funciona todo junto:
+
+1. **Desarrollo**: Escribo código en una rama `feature/`
+2. **Push**: Subo los cambios a GitHub
+3. **CI/CD**: CircleCI ejecuta todos los checks
+4. **Tests**: Si fallan, el pipeline se para
+5. **Merge a main**: Si todo está bien, integro a main
+6. **Build & Publish**: CircleCI construye y sube la imagen a Docker Hub
+7. **GitOps**: ArgoCD detecta cambios en `k8s/`
+8. **Despliegue**: Kubernetes aplica el nuevo estado
+
+## 🚧 Problemas que encontré
+
+### 1. Contenedores fantasma de Docker Compose
+
+Al principio me daba errores de "container already exists". Lo solucioné limpiando bien con:
+```bash
+docker-compose down -v --remove-orphans
+```
+
+### 2. PostgreSQL no estaba listo
+
+La API intentaba conectarse antes de que PostgreSQL estuviera lista. Lo arreglé añadiendo `healthcheck` en docker-compose y `depends_on` con condición.
+
+### 3. CircleCI y las claves de API
+
+Configurar las variables de entorno en CircleCI (Docker Hub, SonarCloud, Snyk) me llevó un rato hasta entender bien cómo funcionaban los contexts y las project settings.
+
+## 📚 Lo que he aprendido
+
+- A montar un pipeline de CI/CD completo desde cero
+- La importancia de los tests automatizados y la calidad de código
+- Cómo integrar herramientas de análisis de seguridad
+- El concepto de GitOps y cómo aplicarlo con ArgoCD
+- Que la documentación es tan importante como el código
+- A debuggear errores de Docker y Kubernetes leyendo logs
+
+## 🔗 Enlaces
+
+- **Repositorio**: [GitHub - practica-apitodo](PONER_ENLACE)
+- **Docker Hub**: [cristianllor/apitodo](PONER_ENLACE)
+- **SonarCloud**: [Project Dashboard](PONER_ENLACE)
+- **Snyk**: [Project Report](PONER_ENLACE)
+- **Vídeo explicativo**: [YouTube](PONER_ENLACE)
+
+## 📝 Notas finales
+
+Este proyecto ha sido un buen ejercicio para juntar todo lo que hemos visto en el módulo. No es perfecto (seguro que hay cosas que se pueden mejorar), pero funciona y cumple con los requisitos de la práctica.
+
+---
+
+**Cristian Llorente**  
+Bootcamp DevOps & Cloud Engineering - KeepCoding  
+Marzo 2025
