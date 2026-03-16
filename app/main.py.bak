@@ -7,7 +7,6 @@ import psycopg2
 from psycopg2 import Error
 from psycopg2.extras import RealDictCursor
 
-# Configuración de logging
 logger = logging.getLogger("todo-api")
 log_handler = logging.StreamHandler()
 formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -18,16 +17,10 @@ logger.propagate = False
 
 app = Flask(__name__)
 
-# Configuración de base de datos
 DB_HOST = os.getenv("DB_HOST", "db-tareas")
 DB_NAME = os.getenv("DB_NAME", "tareas_db")
 DB_USER = os.getenv("DB_USER", "admin")
-DB_PASS = os.getenv("DB_PASS")
-
-# Validar contraseña (Security Hotspot fix)
-if not DB_PASS:
-    logger.warning("DB_PASS no configurado. Usando valor por defecto (SOLO PARA DESARROLLO)")
-    DB_PASS = "password"
+DB_PASS = os.getenv("DB_PASS", "password")
 
 
 def get_db_connection():
@@ -99,7 +92,7 @@ def add_task():
         conn.commit()
         cur.close()
         conn.close()
-        logger.info("Nueva tarea creada con ID: %s", new_task['id'])
+        logger.info("Tarea creada: %s", data["content"])
         return jsonify(new_task), 201
     except Error as exc:
         logger.error("Error al guardar: %s", exc)
@@ -125,7 +118,7 @@ def update_task(task_id):
         conn.commit()
         cur.close()
         conn.close()
-        logger.info("Tarea %s actualizada", task_id)
+        logger.info("Tarea %s actualizada a: %s", task_id, completed)
         return jsonify({"status": "updated"})
     except Error as exc:
         logger.error("Error al actualizar tarea %s: %s", task_id, exc)
@@ -135,13 +128,7 @@ def update_task(task_id):
 def run_app():
     time.sleep(5)
     init_db()
-    
-    # Security: configurar host desde variable de entorno
-    host = os.getenv("FLASK_HOST", "127.0.0.1")
-    port = int(os.getenv("FLASK_PORT", "5000"))
-    debug = os.getenv("FLASK_ENV") == "development"
-    
-    app.run(host=host, port=port, debug=debug)
+    app.run(host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
