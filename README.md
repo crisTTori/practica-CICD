@@ -84,13 +84,8 @@ El pipeline está en `.circleci/config.yml` y se ejecuta automáticamente en cad
 6. **Snyk** → Busca vulnerabilidades en dependencias
 7. **Build Docker** → Construye la imagen
 8. **Publish** → Sube la imagen a Docker Hub (solo en `main`)
+9. **Update manifest** → Actualiza el manifiesto de K8s con el nuevo tag de imagen y hace commit al repo
 
-### Jobs principales:
-
-- `test-and-quality` → Tests, cobertura y linting
-- `sonar-analysis` → Análisis de calidad de código
-- `snyk-analysis` → Escaneo de vulnerabilidades
-- `publish-docker-image` → Build y push de la imagen (solo main)
 
 ## 🧪 Tests y calidad de código
 
@@ -123,6 +118,8 @@ Se generan dos tags:
 - `latest` → Última versión
 - `<commit-hash>` → Versión específica por commit
 
+Además de publicar la imagen, el pipeline actualiza el manifiesto `k8s/api-deployment.yaml` con el nuevo tag generado. Así el cambio también queda reflejado en Git y ArgoCD puede detectarlo y desplegarlo.
+
 ## ☸️ Kubernetes y ArgoCD
 
 He desplegado la aplicación en Kubernetes usando Minikube y ArgoCD para la sincronización automática.
@@ -131,7 +128,6 @@ Los manifiestos están en la carpeta `k8s/` e incluyen:
 - Deployment y Service para la API
 - StatefulSet y Service para PostgreSQL
 - Secret para las credenciales
-- PersistentVolumeClaim para la persistencia de datos
 
 ### GitOps con ArgoCD:
 
@@ -152,14 +148,15 @@ kubectl get all -n todo-app
 
 Así funciona todo junto:
 
-1. **Desarrollo**: Escribo código en una rama `feature/`
+1. **Desarrollo**: Trabajo en una rama `feature/`
 2. **Push**: Subo los cambios a GitHub
-3. **CI/CD**: CircleCI ejecuta todos los checks
-4. **Tests**: Si fallan, el pipeline se para
-5. **Merge a main**: Si todo está bien, integro a main
-6. **Build & Publish**: CircleCI construye y sube la imagen a Docker Hub
-7. **GitOps**: ArgoCD detecta cambios en `k8s/`
-8. **Despliegue**: Kubernetes aplica el nuevo estado
+3. **CI**: CircleCI ejecuta tests, cobertura, linting y análisis
+4. **Merge a main**: Si todo está correcto, integro el cambio en la rama principal
+5. **Build & Publish**: CircleCI construye y sube la nueva imagen a Docker Hub
+6. **Update manifest**: CircleCI actualiza `k8s/api-deployment.yaml` con el nuevo tag de imagen
+7. **Commit automático**: El pipeline sube ese cambio al repositorio
+8. **GitOps**: ArgoCD detecta el cambio en Git
+9. **Despliegue**: Kubernetes aplica el nuevo estado
 
 ## 🚧 Problemas que encontré
 
@@ -191,7 +188,7 @@ Configurar las variables de entorno en CircleCI (Docker Hub, SonarCloud, Snyk) m
 
 - **Repositorio**: [GitHub - practica-apitodo](https://github.com/crisTTori/practica-apitodo)
 - **Docker Hub**: [cristianllor/apitodo](https://hub.docker.com/repository/docker/cristianllor/apitodo/general)
-- **SonarCloud**: [Project Dashboard](PONER_ENLACE)
+- **SonarCloud**: [Project Dashboard](https://sonarcloud.io/project/overview?id=crisTTori_practica-CICD)
 - **Snyk**: [Project Report](./docs/SS-Snyk.png)
 - **Vídeo explicativo**: [YouTube](PONER_ENLACE)
 
