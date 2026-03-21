@@ -192,7 +192,7 @@ Configurar las variables de entorno en CircleCI (Docker Hub, SonarCloud, Snyk) m
 - **Repositorio**: [GitHub - practica-apitodo](https://github.com/crisTTori/practica-apitodo)
 - **Docker Hub**: [cristianllor/apitodo](https://hub.docker.com/repository/docker/cristianllor/apitodo/general)
 - **SonarCloud**: [Project Dashboard](PONER_ENLACE)
-- **Snyk**: [Project Report](PONER_ENLACE)
+- **Snyk**: [Project Report](./docs/SS-Snyk.png)
 - **Vídeo explicativo**: [YouTube](PONER_ENLACE)
 
 ## 📝 Notas finales

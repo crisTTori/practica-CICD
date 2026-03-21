@@ -149,6 +149,27 @@ jobs:
           command: |
             docker push $DOCKERHUB_USERNAME/apitodo:latest
             docker push $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1}
+            - run:
+          name: Actualizar manifiesto Kubernetes con la nueva imagen
+          command: |
+            sed -i "s|image: .*|image: ${DOCKERHUB_USERNAME}/apitodo:${CIRCLE_SHA1}|" k8s/api-deployment.yaml
+            echo "Imagen actualizada en k8s/api-deployment.yaml"
+            grep "image:" k8s/api-deployment.yaml
+
+      - run:
+          name: Commit y push del nuevo tag al repositorio
+          command: |
+            git config --global user.email "$GIT_EMAIL"
+            git config --global user.name "$GIT_USERNAME"
+
+            git add k8s/api-deployment.yaml
+
+            git diff --cached --quiet && echo "Sin cambios para commitear" && exit 0
+
+            git commit -m "Actualizar imagen desplegada a ${CIRCLE_SHA1} [skip ci]"
+
+            git remote set-url origin https://${GITHUB_TOKEN}@github.com/crisTTori/practica-CICD.git
+            git push origin main
 
 workflows:
   ci_pipeline:
