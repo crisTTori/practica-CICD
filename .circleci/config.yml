@@ -149,7 +149,8 @@ jobs:
           command: |
             docker push $DOCKERHUB_USERNAME/apitodo:latest
             docker push $DOCKERHUB_USERNAME/apitodo:${CIRCLE_SHA1}
-            - run:
+
+      - run:
           name: Actualizar manifiesto Kubernetes con la nueva imagen
           command: |
             sed -i "s|image: .*|image: ${DOCKERHUB_USERNAME}/apitodo:${CIRCLE_SHA1}|" k8s/api-deployment.yaml
