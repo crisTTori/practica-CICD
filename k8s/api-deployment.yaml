@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todo-api
-          image: cristianllor/apitodo:9e2e50880cf7ead863cb11c3cdbf25dda23b0c6d
+          image: cristianllor/apitodo:5f8b666935045a664272c3d0fa41aafc666c8554
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
