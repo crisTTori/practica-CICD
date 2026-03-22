@@ -101,7 +101,7 @@ El pipeline ejecuta automáticamente:
 
 ### Desarrollo local con Docker Compose
 
-Para probar en local sin complicarme (por eso dejé el el "docker-compose.yaml" en el repo):
+Para probar en local sin complicarme y asegurarme el correcto funcionamiento de la app antes de realizar ningún test (por eso dejé el el "docker-compose.yaml" en el repo):
 ```bash
 docker-compose up --build
 ```
@@ -110,7 +110,7 @@ Esto levanta la API y PostgreSQL con todo configurado.
 
 ### Imagen publicada
 
-La imagen se publica automáticamente en Docker Hub cuando hago merge a `main`:
+La imagen se publica automáticamente en Docker Hub una vez integrado el pipeline en CircleCI cuando hago merge a `main`:
 
 **Repositorio**: `cristianllor/apitodo`
 
@@ -120,27 +120,45 @@ Se generan dos tags:
 
 Además de publicar la imagen, el pipeline actualiza el manifiesto `k8s/api-deployment.yaml` con el nuevo tag generado. Así el cambio también queda reflejado en Git y ArgoCD puede detectarlo y desplegarlo.
 
-## ☸️ Kubernetes y ArgoCD
+### ☸️ Kubernetes y ArgoCD
 
-He desplegado la aplicación en Kubernetes usando Minikube y ArgoCD para la sincronización automática.
+He desplegado la aplicación en Kubernetes usando Minikube y ArgoCD para la sincronización del estado del clúster con lo definido en Git.
 
 Los manifiestos están en la carpeta `k8s/` e incluyen:
 - Deployment y Service para la API
 - StatefulSet y Service para PostgreSQL
 - Secret para las credenciales
 
-### GitOps con ArgoCD:
+### GitOps con ArgoCD
 
-El flujo es simple: cuando hago cambios en los manifiestos de `k8s/`, ArgoCD detecta que el cluster está desincronizado y aplica los cambios automáticamente (o manualmente según la configuración).
+ArgoCD toma como referencia el contenido del repositorio Git. Esto significa que no detecta directamente que una imagen en Docker Hub haya cambiado, sino que detecta cambios en los manifiestos de Kubernetes almacenados en Git.
+
+Por eso, en mi caso el flujo final queda así:
+
+1. Hago un cambio en el código de la aplicación
+2. CircleCI ejecuta tests, calidad y seguridad
+3. Si todo va bien en `main`, publica una nueva imagen en Docker Hub
+4. El pipeline actualiza automáticamente `k8s/api-deployment.yaml` con el nuevo tag de imagen
+5. Ese cambio se sube al repositorio
+6. ArgoCD detecta que Git ha cambiado y que el clúster está desincronizado
+7. Se sincroniza el despliegue y Kubernetes aplica la nueva versión
+
+De esta forma, ArgoCD no depende de detectar cambios en Docker Hub directamente, sino del cambio en Git, que es la fuente de verdad del despliegue.
+
 ```bash
 # Acceder a ArgoCD
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 
-# Ver estado de la aplicación
-kubectl get all -n todo-app
+# Obtener la contraseña inicial del usuario admin
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
+Después se accede desde el navegador a: https://localhost:8080
+
+Usuario: admin | Password: "El que obtuvimos antes"
 
 **Nota sobre secretos**: Para esta práctica he usado credenciales de prueba que están en el repositorio. En producción esto **NO es recomendable** y se deberían usar herramientas como Sealed Secrets o gestores de secretos.
+
+
 
 ## 🎯 Flujo completo del proyecto
 
@@ -188,8 +206,13 @@ Configurar las variables de entorno en CircleCI (Docker Hub, SonarCloud, Snyk) m
 
 - **Repositorio**: [GitHub - practica-apitodo](https://github.com/crisTTori/practica-apitodo)
 - **Docker Hub**: [cristianllor/apitodo](https://hub.docker.com/repository/docker/cristianllor/apitodo/general)
-- **SonarCloud**: [Project Dashboard](https://sonarcloud.io/project/overview?id=crisTTori_practica-CICD)
-- **Snyk**: [Project Report](./docs/SS-Snyk.png)
+- **Pipeline config**: [Enlace a fichero](.circleci/config.yml)
+- **Pipeline CircleCI**: [Captura](./docs/SS-CircleCI.png)
+- **Manifiestos Kubernetes**: [Enlace a ficheros](k8s/)
+- **Aplicación desplegada**: [Captura](./docs/SS-app.png)
+- **ArgoCD**: [Captura](./docs/SS-argocd.png)
+- **SonarCloud**: [Proyecto](https://sonarcloud.io/project/overview?id=crisTTori_practica-CICD)
+- **Snyk**: [Captura](./docs/SS-Snyk.png)
 - **Vídeo explicativo**: [YouTube](PONER_ENLACE)
 
 ## 📝 Notas finales
