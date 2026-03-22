@@ -213,7 +213,7 @@ Configurar las variables de entorno en CircleCI (Docker Hub, SonarCloud, Snyk) m
 - **ArgoCD**: [Captura](./docs/SS-argocd.png)
 - **SonarCloud**: [Proyecto](https://sonarcloud.io/project/overview?id=crisTTori_practica-CICD)
 - **Snyk**: [Captura](./docs/SS-Snyk.png)
-- **Vídeo explicativo**: [YouTube](PONER_ENLACE)
+- **Vídeo explicativo**: [YouTube](https://youtu.be/kIO4taHktEY)
 
 ## 📝 Notas finales
 
